@@ -16,8 +16,7 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('username', this)">Username</button>
       <button class="tab-btn" onclick="showTab('nik', this)">Bedah NIK</button>
-      <button class="tab-btn" onclick="showTab('ip', this)">IP Location</button>
-      <button class="tab-btn" onclick="showTab('logger', this)">IP Logger</button>
+      <button class="tab-btn" onclick="showTab('iptools', this)">IP Tools & Logger</button>
     </div>
 
     <!-- TAB 1: USERNAME -->
@@ -38,23 +37,21 @@
       <div id="resNik" class="result-box">Masukkan NIK lalu klik "Bedah".</div>
     </div>
 
-    <!-- TAB 3: IP LOCATION -->
-    <div id="panel-ip" class="panel">
+    <!-- TAB 3: IP TOOLS & LOGGER -->
+    <div id="panel-iptools" class="panel">
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: bold;">1. Lacak IP / Lokasi Browser</p>
       <div class="input-group">
         <input id="inputIp" type="text" placeholder="Masukkan IP (Kosongkan = IP Lu)">
         <button class="btn" onclick="checkIp()">Cek IP</button>
+        <button class="btn" style="background: #2563eb;" onclick="getExactLocation()">GPS Saya</button>
       </div>
-      <div id="resIp" class="result-box">Klik "Cek IP" untuk melacak lokasi.</div>
-    </div>
+      <div id="resIp" class="result-box" style="margin-bottom: 20px;">Klik "Cek IP" atau "GPS Saya" untuk melacak lokasi.</div>
 
-    <!-- TAB 4: IP LOGGER GENERATOR -->
-    <div id="panel-logger" class="panel">
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Generate Tracking Link buat nyatet IP, Browser, & Perangkat target pas link diklik.</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: bold;">2. Internal IP Logger (Native API)</p>
       <div class="input-group">
-        <input id="targetUrl" type="text" placeholder="URL Tujuan (Contoh: https://youtube.com)">
-        <button class="btn" onclick="createLoggerLink()">Buat Link</button>
+        <button class="btn" style="width: 100%; background: #0284c7;" onclick="fetchInternalLog()">Tes Capture IP Saya via Internal API</button>
       </div>
-      <div id="resLogger" class="result-box">Masukkan URL tujuan lalu klik "Buat Link".</div>
+      <div id="resLogger" class="result-box">Klik tombol di atas untuk tes Serverless API Vercel.</div>
     </div>
 
   </div>

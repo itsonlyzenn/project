@@ -55,7 +55,7 @@ function checkNik() {
   `;
 }
 
-// FUNGSI 4: IP LOCATION API
+// FUNGSI 4A: IP LOCATION API
 async function checkIp() {
   const ip = document.getElementById('inputIp').value.trim();
   const res = document.getElementById('resIp');
@@ -78,6 +78,37 @@ async function checkIp() {
   } catch (err) {
     res.innerHTML = "<span style='color:red;'>Gagal melacak IP (Cek koneksi internet).</span>";
   }
+}
+
+// FUNGSI 4B: GEOLOCATION API (PRESISI GPS)
+function getExactLocation() {
+  const res = document.getElementById('resIp');
+  
+  if (!navigator.geolocation) {
+    alert("Browser tidak mendukung Geolocation API.");
+    return;
+  }
+
+  res.innerHTML = "<i>Meminta izin lokasi presisi...</i>";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      res.innerHTML = `
+        <div class="item"><span>Latitude:</span> <b>${lat}</b></div>
+        <div class="item"><span>Longitude:</span> <b>${lon}</b></div>
+        <div class="item"><span>Akurasi:</span> <b>Radius ±${Math.round(accuracy)} meter</b></div>
+        <div class="item"><span>Google Maps:</span> <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" class="link">Lihat Lokasi Presisi -></a></div>
+      `;
+    },
+    (error) => {
+      res.innerHTML = "<span style='color:red;'>Akses lokasi ditolak atau gagal didapatkan.</span>";
+    },
+    { enableHighAccuracy: true }
+  );
 }
 
 // FUNGSI 5: IP LOGGER LINK GENERATOR
