@@ -1,0 +1,153 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 650px;
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+h1 {
+  color: #34d399;
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 5px;
+}
+
+p.sub {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #334155;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  color: #34d399;
+  border-bottom: 2px solid #34d399;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: white;
+  border-radius: 6px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #34d399;
+}
+
+button.btn {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+button.btn:hover {
+  background: #10b981;
+}
+
+.result-box {
+  background: #020617;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.item {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+a.link {
+  color: #34d399;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a.link:hover {
+  text-decoration: underline;
+}
+
+.copy-btn {
+  background: #334155;
+  color: #34d399;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
