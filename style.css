@@ -1,133 +1,145 @@
-// SWITCH TAB MENU
-function showTab(tabName, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  
-  document.getElementById('panel-' + tabName).classList.add('active');
-  btn.classList.add('active');
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
 }
 
-// SEARCH USERNAME
-function checkUsername() {
-  const u = document.getElementById('inputUser').value.trim();
-  if (!u) return alert('Isi username dulu!');
-  
-  const links = [
-    ['GitHub', 'https://github.com/' + u],
-    ['TikTok', 'https://www.tiktok.com/@' + u],
-    ['Pinterest', 'https://www.pinterest.com/' + u],
-    ['Telegram', 'https://t.me/' + u],
-    ['Google Dork', 'https://www.google.com/search?q="' + u + '"']
-  ];
-
-  let html = '';
-  links.forEach(l => {
-    html += `<div class="item"><span>${l[0]}</span> <a href="${l[1]}" target="_blank" class="link">Buka -></a></div>`;
-  });
-  document.getElementById('resUser').innerHTML = html;
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
-// NIK PARSER
-function checkNik() {
-  const nik = document.getElementById('inputNik').value.trim();
-  if (nik.length !== 16 || isNaN(nik)) return alert('NIK wajib 16 digit angka!');
-
-  let day = parseInt(nik.substring(6, 8));
-  const month = parseInt(nik.substring(8, 10));
-  let year = parseInt(nik.substring(10, 12));
-  
-  let gender = "Laki-Laki";
-  if (day > 40) {
-    gender = "Perempuan";
-    day -= 40;
-  }
-
-  const currentYearTwoDigits = parseInt(new Date().getFullYear().toString().substr(-2));
-  const fullYear = (year > currentYearTwoDigits) ? (1900 + year) : (2000 + year);
-  const age = new Date().getFullYear() - fullYear;
-
-  document.getElementById('resNik').innerHTML = `
-    <div class="item"><span>Gender:</span> <b>${gender}</b></div>
-    <div class="item"><span>Tanggal Lahir:</span> <b>${day.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}-${fullYear}</b></div>
-    <div class="item"><span>Estimasi Usia:</span> <b>${age} Tahun</b></div>
-    <div class="item"><span>Kode Prov/Kab/Kec:</span> <b>${nik.substring(0,2)} / ${nik.substring(2,4)} / ${nik.substring(4,6)}</b></div>
-    <div class="item"><span>No Urut Reg:</span> <b>${nik.substring(12,16)}</b></div>
-  `;
+.container {
+  width: 100%;
+  max-width: 650px;
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
-// IP LOCATION EXTERNAL API
-async function checkIp() {
-  const ip = document.getElementById('inputIp').value.trim();
-  const res = document.getElementById('resIp');
-  res.innerHTML = "<i>Sedang melacak lokasi IP...</i>";
-
-  try {
-    const url = ip ? `https://ipapi.co/${ip}/json/` : `https://ipapi.co/json/`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if(data.error) throw new Error(data.reason);
-
-    res.innerHTML = `
-      <div class="item"><span>IP Address:</span> <b>${data.ip}</b></div>
-      <div class="item"><span>Kota / Wilayah:</span> <b>${data.city}, ${data.region}</b></div>
-      <div class="item"><span>Negara:</span> <b>${data.country_name}</b></div>
-      <div class="item"><span>ISP / Provider:</span> <b>${data.org}</b></div>
-      <div class="item"><span>Google Maps:</span> <a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank" class="link">Lihat Peta -></a></div>
-    `;
-  } catch (err) {
-    res.innerHTML = "<span style='color:red;'>Gagal melacak IP (Cek koneksi internet).</span>";
-  }
+h1 {
+  color: #34d399;
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 5px;
 }
 
-// GEOLOCATION API (GPS PRESISI)
-function getExactLocation() {
-  const res = document.getElementById('resIp');
-  
-  if (!navigator.geolocation) {
-    alert("Browser tidak mendukung Geolocation API.");
-    return;
-  }
-
-  res.innerHTML = "<i>Meminta izin lokasi presisi...</i>";
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
-
-      res.innerHTML = `
-        <div class="item"><span>Latitude:</span> <b>${lat}</b></div>
-        <div class="item"><span>Longitude:</span> <b>${lon}</b></div>
-        <div class="item"><span>Akurasi:</span> <b>Radius ±${Math.round(accuracy)} meter</b></div>
-        <div class="item"><span>Google Maps:</span> <a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" class="link">Lihat Lokasi Presisi -></a></div>
-      `;
-    },
-    (error) => {
-      res.innerHTML = "<span style='color:red;'>Akses lokasi ditolak atau gagal didapatkan.</span>";
-    },
-    { enableHighAccuracy: true }
-  );
+p.sub {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 20px;
 }
 
-// FETCH NATIVE SERVERLESS API LOG
-async function fetchInternalLog() {
-  const res = document.getElementById('resLogger');
-  res.innerHTML = "<i>Menghubungi Serverless API...</i>";
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #334155;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
 
-  try {
-    const response = await fetch('/api/log');
-    const data = await response.json();
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
 
-    res.innerHTML = `
-      <div class="item"><span>Status API:</span> <b style="color:#34d399;">${data.status}</b></div>
-      <div class="item"><span>IP Anda (Captured):</span> <b>${data.ip}</b></div>
-      <div class="item"><span>Lokasi Serverless:</span> <b>${data.location.city}, ${data.location.country}</b></div>
-      <div class="item"><span>User Agent:</span> <b style="font-size:11px;">${data.userAgent}</b></div>
-      <div class="item"><span>Waktu Request:</span> <b>${data.timestamp}</b></div>
-    `;
-  } catch (err) {
-    res.innerHTML = "<span style='color:red;'>Gagal memanggil API internal. Pastikan sudah dideploy ke Vercel.</span>";
-  }
+.tab-btn.active {
+  color: #34d399;
+  border-bottom: 2px solid #34d399;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: white;
+  border-radius: 6px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #34d399;
+}
+
+button.btn {
+  background: #059669;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+button.btn:hover {
+  opacity: 0.9;
+}
+
+.result-box {
+  background: #020617;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.item {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  word-break: break-all;
+}
+
+.item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+a.link {
+  color: #34d399;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a.link:hover {
+  text-decoration: underline;
 }
