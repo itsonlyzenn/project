@@ -11,26 +11,37 @@
   <div class="container">
     <h2>AREX INTEL DASHBOARD</h2>
 
-    <!-- PANEL DISCORD CONNECT & LINK GENERATOR -->
     <div class="card">
-      <h3>1. Hubungkan Bot Discord</h3>
-      <p class="subtext">Klik tombol di bawah untuk meminta kode verifikasi, lalu kirim kode tersebut ke DM Bot Discord Kamu.</p>
-      
-      <button class="btn btn-discord" onclick="getConnectCode()">Dapatkan Kode /connect</button>
-      <div id="codeDisplay" class="code-box">--- ---</div>
-
-      <hr style="border: 0.5px solid #334155; margin: 20px 0;">
-
-      <h3>2. Buat Link Masking (arex.my.id)</h3>
-      <p class="subtext">Masukkan link tujuan asli (misal: youtube.com). Target akan di-redirect ke sana tanpa rasa curiga.</p>
-
-      <div class="input-group">
-        <input id="targetUrl" type="text" placeholder="URL Tujuan (contoh: youtube.com)">
-        <button class="btn btn-danger" onclick="generateMaskedLink()">Bikin Link</button>
+      <!-- State 1: Belum Login -->
+      <div id="loginState">
+        <h3>Autentikasi Pengguna</h3>
+        <p class="subtext">Login dengan Discord untuk menghubungkan akun kamu secara otomatis.</p>
+        <a href="/api/auth/login" class="btn btn-discord">Login with Discord</a>
       </div>
 
-      <div id="resLogger" class="result-box">
-        Ambil kode /connect terlebih dahulu di atas.
+      <!-- State 2: Sudah Login -->
+      <div id="appState" style="display: none;">
+        <div class="user-profile">
+          <img id="userAvatar" src="" alt="Avatar">
+          <div>
+            <div id="userName" class="username">Username</div>
+            <span class="badge">Connected</span>
+          </div>
+        </div>
+
+        <hr style="border: 0.5px solid #334155; margin: 16px 0;">
+
+        <h3>Buat Link Masking (arex.my.id)</h3>
+        <p class="subtext">Masukkan URL tujuan asli (misal: youtube.com).</p>
+
+        <div class="input-group">
+          <input id="targetUrl" type="text" placeholder="URL Tujuan (contoh: youtube.com)">
+          <button class="btn btn-danger" onclick="generateMaskedLink()">Bikin Link</button>
+        </div>
+
+        <div id="resLogger" class="result-box">
+          Siap membuat link tracking.
+        </div>
       </div>
     </div>
   </div>
