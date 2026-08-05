@@ -3,60 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Client OSINT Dashboard</title>
+  <title>Intel Panel - arex.my.id</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <div class="container">
-    <h1>CLIENT OSINT ENGINE</h1>
-    <p class="sub">Toolkit Intelijen Digital & Analytics</p>
+    <h2>AREX INTEL DASHBOARD</h2>
 
-    <!-- MENU TAB NAVIGATION -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('username', this)">Username</button>
-      <button class="tab-btn" onclick="showTab('nik', this)">Bedah NIK</button>
-      <button class="tab-btn" onclick="showTab('iptools', this)">IP Tools & Logger</button>
-    </div>
+    <!-- PANEL DISCORD CONNECT & LINK GENERATOR -->
+    <div class="card">
+      <h3>1. Hubungkan Bot Discord</h3>
+      <p class="subtext">Klik tombol di bawah untuk meminta kode verifikasi, lalu kirim kode tersebut ke DM Bot Discord Kamu.</p>
+      
+      <button class="btn btn-discord" onclick="getConnectCode()">Dapatkan Kode /connect</button>
+      <div id="codeDisplay" class="code-box">--- ---</div>
 
-    <!-- TAB 1: SEARCH USERNAME -->
-    <div id="panel-username" class="panel active">
+      <hr style="border: 0.5px solid #334155; margin: 20px 0;">
+
+      <h3>2. Buat Link Masking (arex.my.id)</h3>
+      <p class="subtext">Masukkan link tujuan asli (misal: youtube.com). Target akan di-redirect ke sana tanpa rasa curiga.</p>
+
       <div class="input-group">
-        <input id="inputUser" type="text" placeholder="Masukkan username target...">
-        <button class="btn" onclick="checkUsername()">Cari</button>
+        <input id="targetUrl" type="text" placeholder="URL Tujuan (contoh: youtube.com)">
+        <button class="btn btn-danger" onclick="generateMaskedLink()">Bikin Link</button>
       </div>
-      <div id="resUser" class="result-box">Klik "Cari" untuk menampilkan tautan profil.</div>
+
+      <div id="resLogger" class="result-box">
+        Ambil kode /connect terlebih dahulu di atas.
+      </div>
     </div>
-
-    <!-- TAB 2: BEDAH NIK -->
-    <div id="panel-nik" class="panel">
-      <div class="input-group">
-        <input id="inputNik" type="text" maxlength="16" placeholder="Masukkan 16 digit NIK...">
-        <button class="btn" onclick="checkNik()">Bedah</button>
-      </div>
-      <div id="resNik" class="result-box">Masukkan NIK lalu klik "Bedah".</div>
-    </div>
-
-    <!-- TAB 3: IP TOOLS & LOGGER -->
-    <div id="panel-iptools" class="panel">
-      <!-- SECTION 1: IP LOOKUP & GPS -->
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: bold;">1. Lacak IP / Lokasi Browser</p>
-      <div class="input-group">
-        <input id="inputIp" type="text" placeholder="Masukkan IP (Kosongkan = IP Lu)">
-        <button class="btn" onclick="checkIp()">Cek IP</button>
-        <button class="btn" style="background: #2563eb;" onclick="getExactLocation()">GPS Saya</button>
-      </div>
-      <div id="resIp" class="result-box" style="margin-bottom: 20px;">Klik "Cek IP" atau "GPS Saya" untuk melacak lokasi.</div>
-
-      <!-- SECTION 2: AUTO LOGGER & LOCATER -->
-      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px; font-weight: bold;">2. Native IP Logger Generator</p>
-      <div class="input-group">
-        <input id="targetUrl" type="text" placeholder="URL Tujuan (misal: youtube.com)">
-        <button class="btn" style="background: #dc2626;" onclick="generateCustomLink()">Bikin Link</button>
-      </div>
-      <div id="resLogger" class="result-box">Masukkan URL tujuan di atas lalu klik "Bikin Link".</div>
-    </div>
-
   </div>
 
   <script src="script.js"></script>
