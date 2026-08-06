@@ -52,7 +52,11 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    return res.redirect(302, `/?session=${sessionToken}`);
+    // 4. Redirect dengan membawa data user agar aman di frontend tanpa kunci Supabase
+    const encodedUsername = encodeURIComponent(userData.username);
+    const encodedAvatar = encodeURIComponent(avatarUrl);
+
+    return res.redirect(302, `/?session=${sessionToken}&username=${encodedUsername}&avatar=${encodedAvatar}`);
 
   } catch (err) {
     console.error("Auth Callback Error:", err);

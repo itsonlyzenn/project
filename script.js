@@ -1,13 +1,18 @@
 let currentSessionToken = "";
 
 // Cek Param Query Sesi di URL saat halaman dimuat
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const session = urlParams.get('session');
+  const username = urlParams.get('username');
+  const avatar = urlParams.get('avatar');
 
-  if (session) {
+  if (session && username && avatar) {
     currentSessionToken = session;
     localStorage.setItem('arex_session', session);
+    localStorage.setItem('arex_username', decodeURIComponent(username));
+    localStorage.setItem('arex_avatar', decodeURIComponent(avatar));
+    
     // Bersihkan URL dari query string agar rapi
     window.history.replaceState({}, document.title, "/");
   } else {
@@ -15,39 +20,20 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (currentSessionToken) {
-    // 1. Ambil data profil dari Supabase berdasarkan session token
-    try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('username, avatar')
-        .eq('session_token', currentSessionToken)
-        .single();
+    // Ambil data tersimpan dari localStorage
+    const savedUsername = localStorage.getItem('arex_username') || "Username";
+    const savedAvatar = localStorage.getItem('arex_avatar') || "";
 
-      if (error || !data) {
-        // Jika sesi tidak valid atau sudah kedaluwarsa di database
-        console.warn("Sesi tidak valid / kedaluwarsa.");
-        localStorage.removeItem('arex_session');
-        currentSessionToken = "";
-        
-        // Tampilkan kembali tombol login, sembunyikan dashboard
-        document.getElementById('loginState').style.display = 'block';
-        document.getElementById('appState').style.display = 'none';
-        return;
-      }
-
-      // 2. MASUKKAN DATA KE ELEMEN HTML (Ini yang sebelumnya kurang!)
-      document.getElementById('userName').innerText = data.username;
-      document.getElementById('userAvatar').src = data.avatar;
-
-    } catch (err) {
-      console.error("Gagal memuat profil:", err);
+    // Pasang ke elemen HTML
+    document.getElementById('userName').innerText = savedUsername;
+    if (savedAvatar) {
+      document.getElementById('userAvatar').src = savedAvatar;
     }
 
-    // 3. Tampilkan State Dashboard jika sesi valid
+    // Tampilkan State Dashboard jika ada sesi
     document.getElementById('loginState').style.display = 'none';
     document.getElementById('appState').style.display = 'block';
   } else {
-    // Jika belum login / tidak ada session token
     document.getElementById('loginState').style.display = 'block';
     document.getElementById('appState').style.display = 'none';
   }
