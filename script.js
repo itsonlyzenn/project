@@ -30,7 +30,8 @@ async function checkSession() {
   }
 
   try {
-    const res = await fetch(`/api/auth/callback?session=${session}`);
+    // UBAH KE /api/auth/check
+    const res = await fetch(`/api/auth/check?session=${session}`);
     const data = await res.json();
 
     if (data.user) {
@@ -149,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================
-// 4. LOGOUT FUNCTION (Optional)
+// 4. LOGOUT FUNCTION
 // ============================================
 function logout() {
   localStorage.clear();
