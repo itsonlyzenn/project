@@ -1,234 +1,203 @@
 /* style.css - AREX INTEL DASHBOARD */
 
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0f172a;
+  background-color: #0f172a;
+  color: #f8fafc;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* ================= LOGIN WRAPPER ================= */
+.login-wrapper {
+  width: 100%;
+  max-width: 400px;
   padding: 20px;
 }
 
-.container {
-  width: 100%;
-  max-width: 520px;
-}
-
-.container h2 {
+.login-card {
+  background-color: #1e293b;
+  padding: 40px 30px;
+  border-radius: 12px;
   text-align: center;
-  color: #f8fafc;
-  font-weight: 700;
-  font-size: 24px;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-  text-shadow: 0 0 20px rgba(100, 116, 139, 0.2);
-}
-
-.card {
-  background: #1e293b;
-  border-radius: 20px;
-  padding: 30px 28px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   border: 1px solid #334155;
 }
 
-.card h3 {
-  color: #f1f5f9;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 6px;
+.login-card h2 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: #ffffff;
 }
 
-.subtext {
+.login-card p {
   color: #94a3b8;
   font-size: 14px;
   margin-bottom: 20px;
-  line-height: 1.5;
 }
 
-.subtext strong {
-  color: #4ade80;
-}
-
-/* Login State */
-#loginState {
-  text-align: center;
-  padding: 10px 0;
-}
-
-#loginState h3 {
-  margin-bottom: 8px;
-}
-
-.btn {
-  display: inline-block;
-  padding: 12px 28px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 16px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.sub-text {
+  font-size: 12px !important;
+  color: #64748b !important;
+  margin-bottom: 30px !important;
 }
 
 .btn-discord {
-  background: #5865f2;
+  display: inline-block;
+  background-color: #5865F2;
   color: white;
-  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.3);
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  width: 100%;
 }
 
 .btn-discord:hover {
-  background: #4752c4;
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+  background-color: #4752C4;
 }
 
-/* User Profile */
-.user-profile {
+/* ================= DASHBOARD WRAPPER ================= */
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 600px;
+  background-color: #1e293b;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  border: 1px solid #334155;
+  overflow: hidden;
+  margin: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+.user-info {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 0;
+  gap: 12px;
 }
 
-.user-profile img {
-  width: 48px;
-  height: 48px;
+.avatar {
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  border: 2px solid #334155;
+  object-fit: cover;
+  border: 2px solid #5865F2;
 }
 
-.username {
-  color: #f1f5f9;
-  font-size: 16px;
+#userName {
   font-weight: 600;
+  font-size: 15px;
+  color: #f8fafc;
 }
 
-.badge {
-  background: #22c55e;
-  color: #0f172a;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 12px;
-  border-radius: 30px;
-  display: inline-block;
-  margin-top: 2px;
+.btn-logout {
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
-/* Input Group */
+.btn-logout:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+.dashboard-content {
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.dashboard-content h2 {
+  font-size: 24px;
+  margin-bottom: 25px;
+  color: #ffffff;
+}
+
 .input-group {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 6px;
+  margin-bottom: 20px;
 }
 
 .input-group input {
   flex: 1;
-  min-width: 180px;
-  padding: 12px 16px;
-  border-radius: 10px;
+  background-color: #0f172a;
   border: 1px solid #334155;
-  background: #0f172a;
-  color: #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: white;
   font-size: 14px;
   outline: none;
-  transition: border 0.3s;
+  transition: border-color 0.2s;
 }
 
 .input-group input:focus {
-  border-color: #ef4444;
-}
-
-.input-group input::placeholder {
-  color: #64748b;
+  border-color: #5865F2;
 }
 
 .btn-danger {
-  background: #ef4444;
+  background-color: #ef4444;
   color: white;
-  padding: 12px 22px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
   border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
+  transition: background-color 0.2s;
 }
 
 .btn-danger:hover {
-  background: #dc2626;
-  transform: scale(1.02);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+  background-color: #dc2626;
 }
 
-.btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Result Box */
+/* ================= RESULT BOX ================= */
 .result-box {
-  margin-top: 16px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  color: #94a3b8;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
   font-size: 14px;
+  text-align: left;
   word-break: break-all;
-  min-height: 50px;
-  transition: all 0.3s;
 }
 
 .result-box.success {
-  border-color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid #22c55e;
   color: #4ade80;
 }
 
 .result-box.error {
-  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
   color: #f87171;
 }
 
-.result-box .short-link {
-  color: #60a5fa;
-  font-weight: 600;
-  text-decoration: underline;
+.short-link {
+  color: #38bdf8;
   cursor: pointer;
-}
-
-.result-box .short-link:hover {
-  color: #93bbfc;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .card {
-    padding: 20px 16px;
-  }
-
-  .input-group {
-    flex-direction: column;
-  }
-
-  .input-group input {
-    min-width: unset;
-    width: 100%;
-  }
-
-  .btn-danger {
-    width: 100%;
-    justify-content: center;
-  }
+  text-decoration: underline;
+  font-weight: 600;
 }
