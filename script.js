@@ -77,7 +77,7 @@ async function generateMaskedLink() {
   resBox.textContent = '⏳ Membuat link tracking...';
 
   try {
-    const res = await fetch(`/api/r?action=create&target=${encodeURIComponent(formattedTarget)}&session=${session}`);
+    const res = await fetch(`/api/r/create?action=create&target=${encodeURIComponent(formattedTarget)}&session=${session}`);
     const data = await res.json();
 
     if (data.error) {
