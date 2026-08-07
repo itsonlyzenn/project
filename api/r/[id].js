@@ -1,215 +1,76 @@
-import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.Supabase_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.Supabase_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-let supabase = null;
-if (supabaseUrl && supabaseKey) {
-  supabase = createClient(supabaseUrl, supabaseKey);
-}
+export default async function handler(req, res) {
+  const { id, action, target, session } = req.query;
 
-export default function RedirectPage({ linkData, error }) {
-  const [status, setStatus] = useState('Mendapatkan lokasi presisi...');
-  const [accuracy, setAccuracy] = useState(null);
-  const [countdown, setCountdown] = useState(3);
-
-  useEffect(() => {
-    if (error || !linkData) {
-      window.location.href = 'https://google.com';
-      return;
+  // 1. KASUS 1: MEMBUAT LINK BARU (Dipanggil dari Frontend Dashboard)
+  if (action === 'create') {
+    if (!session || !target) {
+      return res.status(400).json({ error: "Missing session or target URL" });
     }
 
-    const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    if (!navigator.geolocation) {
-      setStatus('⚠️ Browser tidak support GPS, menggunakan IP geolocation');
-      sendLocation(null);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        setAccuracy(accuracy);
-        setStatus(`✅ Lokasi ditemukan! Akurasi ±${Math.round(accuracy)}m`);
-        
-        await sendLocation({
-          lat: latitude,
-          lon: longitude,
-          accuracy: accuracy
-        });
-      },
-      async (err) => {
-        console.warn('Geolocation error:', err.message);
-        setStatus('⚠️ Izin lokasi ditolak, menggunakan IP geolocation');
-        await sendLocation(null);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
-
-    return () => clearInterval(timer);
-  }, [linkData, error]);
-
-  async function sendLocation(gpsData) {
     try {
-      const response = await fetch('/api/track-location', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shortId: linkData.short_id,
-          gps: gpsData,
-          timestamp: new Date().toISOString()
-        })
-      });
+      // Validasi sesi user di Supabase
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('session_token', session)
+        .single();
 
-      await response.json();
-      console.log('📍 Lokasi terkirim');
-
-      setTimeout(() => {
-        window.location.href = linkData.target_url;
-      }, 3000);
-    } catch (err) {
-      console.error('Gagal kirim lokasi:', err);
-      setTimeout(() => {
-        window.location.href = linkData.target_url;
-      }, 2000);
-    }
-  }
-
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-      backgroundColor: '#0a0a0a',
-      color: 'white',
-      flexDirection: 'column',
-      padding: '20px'
-    }}>
-      <div style={{
-        padding: '40px',
-        borderRadius: '16px',
-        backgroundColor: '#1a1a1a',
-        textAlign: 'center',
-        maxWidth: '500px',
-        width: '100%',
-        border: '1px solid #2a2a2a',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ fontSize: '48px', marginBottom: '10px' }}>
-          {accuracy !== null && accuracy < 500 ? '🎯' : '📍'}
-        </div>
-        
-        <h2 style={{ 
-          color: accuracy !== null && accuracy < 500 ? '#4CAF50' : '#FFA726',
-          marginBottom: '10px'
-        }}>
-          {accuracy !== null && accuracy < 500 ? 'Lokasi Presisi Ditemukan!' : 'Mengakses Link...'}
-        </h2>
-        
-        <p style={{ margin: '20px 0', fontSize: '16px', color: '#aaa' }}>{status}</p>
-        
-        {accuracy !== null && (
-          <div style={{
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            backgroundColor: accuracy < 500 ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 167, 38, 0.15)',
-            border: `1px solid ${accuracy < 500 ? '#4CAF50' : '#FFA726'}`
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: accuracy < 500 ? '#4CAF50' : '#FFA726' }}>
-              ±{Math.round(accuracy)} meter
-            </div>
-            <div style={{ fontSize: '14px', color: '#888', marginTop: '4px' }}>
-              {accuracy < 500 ? '✅ Dalam radius 500m' : '⚠️ Melebihi 500m (fallback IP)'}
-            </div>
-          </div>
-        )}
-
-        <div style={{ 
-          fontSize: '14px', 
-          color: '#666', 
-          marginTop: '20px',
-          borderTop: '1px solid #2a2a2a',
-          paddingTop: '20px'
-        }}>
-          Redirect dalam <strong style={{ color: 'white' }}>{countdown}</strong> detik...
-        </div>
-
-        <button 
-          onClick={() => window.location.href = linkData?.target_url || 'https://google.com'}
-          style={{
-            marginTop: '15px',
-            padding: '10px 30px',
-            backgroundColor: '#2a2a2a',
-            color: 'white',
-            border: '1px solid #3a3a3a',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            transition: 'all 0.3s'
-          }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#3a3a3a'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#2a2a2a'}
-        >
-          Lewati & Redirect Sekarang →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export async function getServerSideProps(context) {
-  const { id } = context.params;
-  
-  const supabaseUrl = process.env.Supabase_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.Supabase_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('❌ Supabase environment variables not found');
-    return { props: { error: 'Konfigurasi server tidak lengkap', linkData: null } };
-  }
-  
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  try {
-    const { data: linkData, error } = await supabase
-      .from('links')
-      .select('*')
-      .eq('short_id', id)
-      .single();
-
-    if (error || !linkData) {
-      return { props: { error: 'Link tidak ditemukan', linkData: null } };
-    }
-
-    return {
-      props: {
-        linkData: {
-          short_id: linkData.short_id,
-          target_url: linkData.target_url,
-          user_id: linkData.user_id
-        },
-        error: null
+      if (sessionError || !sessionData) {
+        return res.status(401).json({ error: "Sesi habis atau tidak valid. Silakan login ulang." });
       }
-    };
-  } catch (err) {
-    console.error('Error:', err);
-    return { props: { error: 'Terjadi kesalahan', linkData: null } };
+
+      // Generate kode random untuk link pendek
+      const linkCode = Math.random().toString(36).substring(2, 8);
+
+      // Simpan ke tabel links
+      const { error: insertError } = await supabase
+        .from('links')
+        .insert([{
+          code: linkCode,
+          target_url: target,
+          user_id: sessionData.user_id
+        }]);
+
+      if (insertError) throw insertError;
+
+      const shortUrl = `https://arex.my.id/api/r/${linkCode}`;
+      return res.status(200).json({ shortUrl });
+
+    } catch (err) {
+      console.error("Create Link Error:", err);
+      return res.status(500).json({ error: "Gagal membuat link: " + err.message });
+    }
   }
+
+  // 2. KASUS 2: REDIRECT & TRACKING (Saat link pendek diakses orang/target)
+  if (id) {
+    try {
+      // Cari target URL berdasarkan kode di tabel links
+      const { data: linkData, error: linkError } = await supabase
+        .from('links')
+        .select('*')
+        .eq('code', id)
+        .single();
+
+      if (linkError || !linkData) {
+        return res.status(404).send("Link tidak ditemukan atau sudah kadaluarsa.");
+      }
+
+      // (Opsional) Di sini nanti bisa ditambahin logika log/tracking lokasi target sebelum di-redirect
+
+      // Redirect permanen/sementara ke URL target asli
+      res.setHeader('Location', linkData.target_url);
+      return res.status(302).end();
+
+    } catch (err) {
+      console.error("Redirect Error:", err);
+      return res.status(500).send("Internal Server Error");
+    }
+  }
+
+  return res.status(400).json({ error: "Bad request" });
 }
