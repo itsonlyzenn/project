@@ -1,9 +1,25 @@
-// script.js - AREX INTEL DASHBOARD
+// script.js - AREX INTEL DASHBOARD (FULL CODE)
 
 // ============================================
 // 1. CEK SESSION / LOGIN STATUS
 // ============================================
 async function checkSession() {
+  // Tangkap parameter dari URL jika baru saja redirect dari login Discord
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSession = urlParams.get('session');
+  const urlUsername = urlParams.get('username');
+  const urlAvatar = urlParams.get('avatar');
+
+  if (urlSession) {
+    // Simpan ke localStorage supaya permanen
+    localStorage.setItem('session_token', urlSession);
+    if (urlUsername) localStorage.setItem('username', urlUsername);
+    if (urlAvatar) localStorage.setItem('avatar', urlAvatar);
+
+    // Bersihkan URL dari parameter supaya bersih
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   const session = localStorage.getItem('session_token');
   
   if (!session) {
@@ -26,7 +42,7 @@ async function checkSession() {
       document.getElementById('userName').textContent = data.user.username || 'User';
     } else {
       // Session invalid
-      localStorage.removeItem('session_token');
+      localStorage.clear();
       document.getElementById('loginState').style.display = 'block';
       document.getElementById('appState').style.display = 'none';
     }
@@ -112,7 +128,7 @@ async function generateMaskedLink() {
 }
 
 // ============================================
-// 3. HANDLE ENTER KEY
+// 3. HANDLE ENTER KEY & INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
   // Cek session
@@ -120,21 +136,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Enter key support
   const input = document.getElementById('targetUrl');
-  input.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      generateMaskedLink();
-    }
-  });
+  if (input) {
+    input.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        generateMaskedLink();
+      }
+    });
 
-  // Auto-focus ke input
-  setTimeout(() => input.focus(), 500);
+    // Auto-focus ke input
+    setTimeout(() => input.focus(), 500);
+  }
 });
 
 // ============================================
-// 4. (Optional) Logout - Jika diperlukan
+// 4. LOGOUT FUNCTION (Optional)
 // ============================================
-// Tambahkan tombol logout di HTML jika mau
-// function logout() {
-//   localStorage.removeItem('session_token');
-//   window.location.reload();
-// }
+function logout() {
+  localStorage.clear();
+  window.location.href = '/';
+}
