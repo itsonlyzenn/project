@@ -4,54 +4,40 @@
 // 1. CEK SESSION / LOGIN STATUS
 // ============================================
 async function checkSession() {
-  // Tangkap parameter dari URL jika baru saja redirect dari login Discord
+  // Tangkap parameter dari URL setelah redirect Discord
   const urlParams = new URLSearchParams(window.location.search);
   const urlSession = urlParams.get('session');
   const urlUsername = urlParams.get('username');
   const urlAvatar = urlParams.get('avatar');
 
+  // Jika ada parameter session di URL, simpan ke localStorage
   if (urlSession) {
-    // Simpan ke localStorage supaya permanen
     localStorage.setItem('session_token', urlSession);
     if (urlUsername) localStorage.setItem('username', urlUsername);
     if (urlAvatar) localStorage.setItem('avatar', urlAvatar);
 
-    // Bersihkan URL dari parameter supaya bersih
+    // Bersihkan URL dari parameter yang panjang supaya rapi
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
+  // Ambil data dari localStorage
   const session = localStorage.getItem('session_token');
-  
+  const username = localStorage.getItem('username');
+  const avatar = localStorage.getItem('avatar');
+
+  // Jika tidak ada session token, tampilkan halaman login
   if (!session) {
-    // Belum login
     document.getElementById('loginState').style.display = 'block';
     document.getElementById('appState').style.display = 'none';
     return;
   }
 
-  try {
-    // UBAH KE /api/auth/check
-    const res = await fetch(`/api/auth/check?session=${session}`);
-    const data = await res.json();
+  // Jika ada session, langsung buka dashboard dan pasang data usernya
+  document.getElementById('loginState').style.display = 'none';
+  document.getElementById('appState').style.display = 'block';
 
-    if (data.user) {
-      // Login berhasil
-      document.getElementById('loginState').style.display = 'none';
-      document.getElementById('appState').style.display = 'block';
-      
-      document.getElementById('userAvatar').src = data.user.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
-      document.getElementById('userName').textContent = data.user.username || 'User';
-    } else {
-      // Session invalid
-      localStorage.clear();
-      document.getElementById('loginState').style.display = 'block';
-      document.getElementById('appState').style.display = 'none';
-    }
-  } catch (err) {
-    console.error('Session check error:', err);
-    document.getElementById('loginState').style.display = 'block';
-    document.getElementById('appState').style.display = 'none';
-  }
+  document.getElementById('userAvatar').src = avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+  document.getElementById('userName').textContent = username || 'User';
 }
 
 // ============================================
