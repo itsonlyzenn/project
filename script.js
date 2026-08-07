@@ -1,76 +1,140 @@
-let currentSessionToken = "";
+// script.js - AREX INTEL DASHBOARD
 
-// Cek Param Query Sesi di URL saat halaman dimuat
-window.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const session = urlParams.get('session');
-  const username = urlParams.get('username');
-  const avatar = urlParams.get('avatar');
-
-  if (session && username && avatar) {
-    currentSessionToken = session;
-    localStorage.setItem('arex_session', session);
-    localStorage.setItem('arex_username', decodeURIComponent(username));
-    localStorage.setItem('arex_avatar', decodeURIComponent(avatar));
-    
-    // Bersihkan URL dari query string agar rapi
-    window.history.replaceState({}, document.title, "/");
-  } else {
-    currentSessionToken = localStorage.getItem('arex_session') || "";
+// ============================================
+// 1. CEK SESSION / LOGIN STATUS
+// ============================================
+async function checkSession() {
+  const session = localStorage.getItem('session_token');
+  
+  if (!session) {
+    // Belum login
+    document.getElementById('loginState').style.display = 'block';
+    document.getElementById('appState').style.display = 'none';
+    return;
   }
 
-  if (currentSessionToken) {
-    // Ambil data tersimpan dari localStorage
-    const savedUsername = localStorage.getItem('arex_username') || "Username";
-    const savedAvatar = localStorage.getItem('arex_avatar') || "";
+  try {
+    const res = await fetch(`/api/auth/callback?session=${session}`);
+    const data = await res.json();
 
-    // Pasang ke elemen HTML
-    document.getElementById('userName').innerText = savedUsername;
-    if (savedAvatar) {
-      document.getElementById('userAvatar').src = savedAvatar;
+    if (data.user) {
+      // Login berhasil
+      document.getElementById('loginState').style.display = 'none';
+      document.getElementById('appState').style.display = 'block';
+      
+      document.getElementById('userAvatar').src = data.user.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+      document.getElementById('userName').textContent = data.user.username || 'User';
+    } else {
+      // Session invalid
+      localStorage.removeItem('session_token');
+      document.getElementById('loginState').style.display = 'block';
+      document.getElementById('appState').style.display = 'none';
     }
-
-    // Tampilkan State Dashboard jika ada sesi
-    document.getElementById('loginState').style.display = 'none';
-    document.getElementById('appState').style.display = 'block';
-  } else {
+  } catch (err) {
+    console.error('Session check error:', err);
     document.getElementById('loginState').style.display = 'block';
     document.getElementById('appState').style.display = 'none';
   }
-});
+}
 
+// ============================================
+// 2. GENERATE MASKED LINK
+// ============================================
 async function generateMaskedLink() {
-  const target = document.getElementById('targetUrl').value.trim();
-  const res = document.getElementById('resLogger');
+  const input = document.getElementById('targetUrl');
+  const btn = document.querySelector('.btn-danger');
+  const resBox = document.getElementById('resLogger');
+  
+  const target = input.value.trim();
+  const session = localStorage.getItem('session_token');
 
-  if (!currentSessionToken) {
-    return alert('Silakan Login dengan Discord terlebih dahulu!');
-  }
+  // Validasi
   if (!target) {
-    return alert('Masukkan URL tujuan asli (misal: youtube.com)!');
+    resBox.className = 'result-box error';
+    resBox.textContent = '❌ Masukkan URL tujuan terlebih dahulu!';
+    return;
   }
 
-  res.innerHTML = "<span style='color:#94a3b8;'>Membuat link tracking...</span>";
+  if (!session) {
+    resBox.className = 'result-box error';
+    resBox.textContent = '❌ Silakan login terlebih dahulu!';
+    return;
+  }
+
+  // Format URL
+  let formattedTarget = target;
+  if (!target.startsWith('http://') && !target.startsWith('https://')) {
+    formattedTarget = 'https://' + target;
+  }
+
+  // Disable button
+  btn.disabled = true;
+  btn.textContent = '⏳ Processing...';
+  resBox.className = 'result-box';
+  resBox.textContent = '⏳ Membuat link tracking...';
 
   try {
-    const response = await fetch(`/api/r/[id]?action=create&target=${encodeURIComponent(target)}&session=${currentSessionToken}`);
-    const data = await response.json();
+    const res = await fetch(`/api/r?action=create&target=${encodeURIComponent(formattedTarget)}&session=${session}`);
+    const data = await res.json();
 
-    if (data.status === 'success') {
-      res.innerHTML = `
-        <div style="color: #34d399; font-weight: bold; margin-bottom: 8px;">✅ LINK TRACKING SIAP</div>
-        <div style="margin-bottom: 8px;">
-          <p style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Kirim link ini ke target:</p>
-          <input type="text" value="${data.shortUrl}" readonly style="width:100%; padding: 8px; background:#0f172a; border:1px solid #334155; color:#34d399; font-size:13px; border-radius:4px;" onclick="this.select()">
-        </div>
-        <p style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
-          🔒 Begitu diklik, log IP & peta lokasi otomatis terkirim ke DM Discord kamu!
-        </p>
-      `;
-    } else {
-      res.innerHTML = `<span style='color:#ef4444;'>${data.error}</span>`;
+    if (data.error) {
+      resBox.className = 'result-box error';
+      resBox.textContent = '❌ ' + data.error;
+      return;
     }
+
+    // Sukses
+    resBox.className = 'result-box success';
+    resBox.innerHTML = `
+      ✅ Link berhasil dibuat!<br>
+      🔗 <span class="short-link" onclick="window.open('${data.shortUrl}', '_blank')">${data.shortUrl}</span>
+      <br><br>
+      <span style="font-size:12px; color:#64748b;">
+        📍 GPS presisi &lt; 500m akan dilacak saat target mengklik link
+      </span>
+    `;
+
+    // Auto copy ke clipboard
+    try {
+      await navigator.clipboard.writeText(data.shortUrl);
+      resBox.innerHTML += `<br><span style="font-size:12px; color:#22c55e;">📋 Link sudah disalin ke clipboard!</span>`;
+    } catch (e) {
+      // Ignore jika clipboard tidak support
+    }
+
   } catch (err) {
-    res.innerHTML = "<span style='color:#ef4444;'>Gagal membuat link tracking.</span>";
+    resBox.className = 'result-box error';
+    resBox.textContent = '❌ Terjadi kesalahan: ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Bikin Link';
   }
 }
+
+// ============================================
+// 3. HANDLE ENTER KEY
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Cek session
+  checkSession();
+
+  // Enter key support
+  const input = document.getElementById('targetUrl');
+  input.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      generateMaskedLink();
+    }
+  });
+
+  // Auto-focus ke input
+  setTimeout(() => input.focus(), 500);
+});
+
+// ============================================
+// 4. (Optional) Logout - Jika diperlukan
+// ============================================
+// Tambahkan tombol logout di HTML jika mau
+// function logout() {
+//   localStorage.removeItem('session_token');
+//   window.location.reload();
+// }

@@ -1,15 +1,15 @@
 {
-  "name": "discord-auth-app",
+  "name": "project",
   "version": "1.0.0",
-  "description": "Discord OAuth with Supabase",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
-  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.8",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "@supabase/supabase-js": "^2.39.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   }
 }

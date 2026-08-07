@@ -1,8 +1,10 @@
 {
   "rewrites": [
-    {
-      "source": "/r/:id",
-      "destination": "/api/r/[id]"
+    { "source": "/r/:id", "destination": "/r/[id]" }
+  ],
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 10
     }
-  ]
+  }
 }
